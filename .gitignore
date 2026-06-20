@@ -6,3 +6,4 @@ __pycache__/
 airflow-logs/
 superset-data/
 .DS_Store
+pgdata/
