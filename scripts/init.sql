@@ -1,0 +1,132 @@
+-- Schema for LLM Stats pipeline
+
+CREATE TABLE IF NOT EXISTS models (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(500),
+    description TEXT,
+    organization_id VARCHAR(255),
+    organization_name VARCHAR(500),
+    family VARCHAR(255),
+    license_id VARCHAR(255),
+    license_name VARCHAR(255),
+    license_allow_commercial BOOLEAN,
+    open_weight BOOLEAN,
+    model_type VARCHAR(100),
+    modalities JSONB,
+    context_window INTEGER,
+    param_count BIGINT,
+    training_tokens BIGINT,
+    knowledge_cutoff VARCHAR(100),
+    release_date DATE,
+    providers JSONB,
+    top_scores JSONB,
+    inference JSONB,
+    source VARCHAR(255),
+    url TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS benchmarks (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(500),
+    description TEXT,
+    categories JSONB,
+    modality VARCHAR(100),
+    max_score FLOAT,
+    language VARCHAR(50),
+    verified BOOLEAN,
+    model_count INTEGER,
+    paper_link TEXT,
+    implementation_link TEXT,
+    source VARCHAR(255),
+    url TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS scores (
+    model_id VARCHAR(255),
+    benchmark_id VARCHAR(255),
+    category VARCHAR(255),
+    model_name VARCHAR(500),
+    organization VARCHAR(255),
+    benchmark_name VARCHAR(500),
+    score FLOAT,
+    normalized_score FLOAT,
+    max_score FLOAT,
+    is_self_reported BOOLEAN,
+    verified BOOLEAN,
+    scored_at TIMESTAMP WITH TIME ZONE,
+    source VARCHAR(255),
+    url TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (model_id, benchmark_id, category)
+);
+
+CREATE TABLE IF NOT EXISTS rankings (
+    category VARCHAR(255),
+    model_id VARCHAR(255),
+    rank INTEGER,
+    model_name VARCHAR(500),
+    organization VARCHAR(255),
+    score FLOAT,
+    conservative_rating FLOAT,
+    open_weight BOOLEAN,
+    min_input_price FLOAT,
+    benchmarks_evaluated INTEGER,
+    method VARCHAR(100),
+    ranked_at TIMESTAMP WITH TIME ZONE,
+    source VARCHAR(255),
+    url TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (category, model_id)
+);
+
+CREATE TABLE IF NOT EXISTS updates (
+    id VARCHAR(255),
+    days INTEGER,
+    name VARCHAR(500),
+    organization_id VARCHAR(255),
+    organization_name VARCHAR(500),
+    model_type VARCHAR(100),
+    modalities JSONB,
+    context_window INTEGER,
+    release_date DATE,
+    open_weight BOOLEAN,
+    added_at TIMESTAMP WITH TIME ZONE,
+    source VARCHAR(255),
+    url TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (id, days)
+);
+
+CREATE TABLE IF NOT EXISTS model_details (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(500),
+    description TEXT,
+    organization_id VARCHAR(255),
+    organization_name VARCHAR(500),
+    family VARCHAR(255),
+    license_id VARCHAR(255),
+    license_name VARCHAR(255),
+    license_allow_commercial BOOLEAN,
+    open_weight BOOLEAN,
+    model_type VARCHAR(100),
+    modalities JSONB,
+    context_window INTEGER,
+    param_count BIGINT,
+    training_tokens BIGINT,
+    knowledge_cutoff VARCHAR(100),
+    release_date DATE,
+    providers JSONB,
+    all_scores JSONB,
+    inference JSONB,
+    source VARCHAR(255),
+    url TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

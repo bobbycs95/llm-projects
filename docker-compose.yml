@@ -1,0 +1,93 @@
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.9.3-python3.11
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:admin@postgres:5432/llm
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'true'
+    LLM_STATS_API_KEY: ${LLM_STATS_API_KEY:-your_api_key_here}
+    LLM_STATS_DB_HOST: postgres
+    LLM_STATS_DB_PORT: '5432'
+    LLM_STATS_DB_NAME: llm
+    LLM_STATS_DB_USER: admin
+    LLM_STATS_DB_PASS: admin
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./scripts:/opt/airflow/scripts
+    - airflow-logs:/opt/airflow/logs
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: llm
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d llm"]
+      interval: 5s
+      retries: 5
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        pip install psycopg2-binary requests --quiet &&
+        airflow db migrate &&
+        airflow users create \
+          --username admin \
+          --password admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com || true
+    restart: "no"
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: bash -c "pip install psycopg2-binary requests --quiet && airflow webserver --port 8080"
+    ports:
+      - "8080:8080"
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    restart: always
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: bash -c "pip install psycopg2-binary requests --quiet && airflow scheduler"
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    restart: always
+
+  dashboard:
+    build: ./dashboard
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: llm
+      DB_USER: admin
+      DB_PASS: admin
+    ports:
+      - "8050:8050"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+
+volumes:
+  pgdata:
+  airflow-logs:
